@@ -364,10 +364,18 @@ void ExcLogicaForn(void) {
 }
 */
 
-
-
-// fazer aqui uma BuscaCodFornecedor(FILE *ptrForn, int codF)
-
+// BuscaCodFornecedor(FILE *ptrForn, int codF) hmm nao sei o que por
+int BuscaCodF(struct Fornecedor F[TF], int TL,int cod)
+{
+	int i=0;
+	
+	while(i<TL && cod!=F[i].codF)
+	i++;
+	if(i<TL)
+	 return i;
+	else
+	 return -1;
+}
 
 
 /*
