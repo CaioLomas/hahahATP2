@@ -5,31 +5,27 @@
 #include<stdlib.h>
 #include<conio2.h>
 
-/*Declaração das structs*/
+/*DeclaraÃ§Ã£o das structs*/
 	struct Datav 
 	{
-    	int dia;
-    	int mes;
-    	int ano;
+    	int dia,mes,ano;
 	};
 
 
 	struct Fornecedor
 	{
-		int codF;
-		char nomeF[35];
-		char Cidade[35];
-		bool statuts;	
+		int codF,qtd=0;
+		char nomeF[35],Cidade[35];;
+		bool status;	
 	};
 	
 	struct Produtos
 	{
-		int codP,Estoque;
+		int codP,Estoque,codF;
 		char nomeP[35];	
 		float preco;
 		struct Datav DTV;
-		int codF;
-		bool statuts;
+		bool status;
 	};
 	
 	struct Cliente
@@ -52,19 +48,15 @@
 	
 	struct VendasProd
 	{
-		int codV;
-		int codP;
-		int qtde;
+		int codV,codP,qtde;
 		float valorU;	
 	};
 	
-/*Funções de limpeza*/
-
+/*FunÃ§Ãµes de limpeza*/
 void limparMenu ()
 {
 	int c,l;
 	
-	//Menu
 	for(c=51;c<78;c++)
 	 for(l=10;l<24;l++)
 	 {
@@ -73,11 +65,10 @@ void limparMenu ()
 	 }	
 }
 
-void limparTela (int &linhaC)
+void limpartela (int &linhaC)
 {	
 	int c,l;
 	
-	//Código
 	if(linhaC>=23)
 	{
 		linhaC=12;
@@ -94,7 +85,6 @@ void limparMsg ()
 {
 	int c=5,l=5;
 	
-		 //Mensagem
 	 	 for(c=5;c<77;c++)
 	   		{
 	   		gotoxy(c,l);
@@ -102,11 +92,10 @@ void limparMsg ()
 	   		}
 }
 
-void limparTelaAnyway ()
+void limpartelaanyway ()
 {
 	int c,l;
 	
-	//Código COMPLETO
 	for(c=3;c<48;c++)
 	 	 for(l=9;l<23;l++)
 	   		{
@@ -114,6 +103,7 @@ void limparTelaAnyway ()
 	   		printf("%c",32);
 	   		}
 }
+
 /*Auxiliares de interface*/
 void msg()
 {
@@ -122,11 +112,12 @@ void msg()
 	textcolor(10);
 }
 
-void txt(int linha)
+void txt(int &linha)
 {
 	textcolor(15);
 	gotoxy(8,linha);
 	fflush(stdin);
+	linha++;
 }
 
 
@@ -296,202 +287,146 @@ char menu7 ()
 }
 
 /*Buscas*/
-/*
-int BuscaMat(FILE *Ptr,int Mat)
+int busca_forn(FILE *Ptr,int cod,struct Fornecedor F)
 {
-	TpFunc R;
 	rewind(Ptr);
-	fread(&R,sizeof(TpFunc),1,Ptr);
-	while (!feof(Ptr) && Mat!=R.Matricula)
-		fread(&R,sizeof(TpFunc),1,Ptr);
+	fread(&F,sizeof(F),1,Ptr);
+	while (!feof(Ptr) && cod!=F.codF)
+		fread(&F,sizeof(F),1,Ptr);
 	
 	if (!feof(Ptr))
-		return ftell(Ptr)-sizeof(TpFunc);
+		return ftell(Ptr)-sizeof(F);
 	else
 		return -1;
-}*/
-	
-/*	
-void ExcLogicaForn(void) {
-    int pos;
-    struct Fornecedor fornecedor; //fodase coloquei mesmo uma struct aqui porra para testar mano porra 
-    FILE *ptrForn = fopen("fornecedores.dat", "rb+");
-
-    printf("\n### Exclusao Logica de Fornecedor ###\n");
-
-    if (ptrForn == NULL) {
-        printf("\nErro de Abertura!\n");
-    } else {
-        printf("\nCodigo do Fornecedor a excluir: ");
-        scanf("%d", &fornecedor.codF);
-
-        while (fornecedor.codF > 0) {
-            pos = BuscaCodFornecedor(ptrForn, fornecedor.codF);
-
-            if (pos == -1) {
-                printf("Codigo nao encontrado!\n");
-            } else {
-                fseek(ptrForn, pos, 0);
-                fread(&fornecedor, sizeof(struct Fornecedor), 1, ptrForn);
-
-                printf("\n*** Detalhes do Registro ***\n");
-                printf("Codigo Fornecedor: %d\n", fornecedor.codF);
-                printf("Nome Fornecedor: %s\n", fornecedor.nomeF);
-                printf("Cidade Fornecedor: %s\n", fornecedor.Cidade);
-
-                printf("\nConfirma Exclusao Logica (S/N)? ");
-                if (toupper(getchar()) == 'S') {
-                    printf("\nNovo Codigo Fornecedor: ");
-                    scanf("%d", &fornecedor.codF);
-                    printf("\nNovo Nome Fornecedor: ");
-                    scanf("%s", fornecedor.nomeF);
-                    printf("\nCidade Fornecedor: ");
-                    scanf("%s", fornecedor.Cidade);
-                    fornecedor.status = false;
-
-                    fseek(ptrForn, pos, 0);
-                    fwrite(&fornecedor, sizeof(struct Fornecedor), 1, ptrForn);
-                    printf("\nRegistro atualizado!!\n");
-                }
-            }
-
-            printf("\nCodigo do Fornecedor a excluir: ");
-            scanf("%d", &fornecedor.codF);
-        }
-
-        fclose(ptrForn);
-    }
 }
-*/
-
-// BuscaCodFornecedor(FILE *ptrForn, int codF) hmm nao sei o que por
-int BuscaCodF(struct Fornecedor F[TF], int TL,int cod)
+	
+/*ExibiÃ§Ãµes dos cadastros e vendas*/
+void visu_forn() 
 {
-	int i=0;
+    int linhaC = 11,larguraMaxima = 20; 
+    struct Fornecedor F;
+
+    FILE *frn = fopen("C://VendasATP2//cadastros//fornecedores.dat","rb");
+	if(frn==NULL)
+	{
+		msg();
+		printf("--[ARQUIVO INVALIDO]--");
+		getch();	
+		exit(1);
+	}
+    
+    else 
+	{
+		fread(&F,sizeof(F),1,frn);
+		while(!feof(frn))
+        {
+        	if(F.status!=true)
+	        {
+		        txt(linhaC);
+		        printf("Codigo: %d", F.codF);
+		        txt(linhaC);
+		        printf("Nome: %-*s", larguraMaxima, F.nomeF);
+				txt(linhaC);
+		        printf("Cidade: %-*s", larguraMaxima, F.Cidade);
+		        linhaC += 2;  
 	
-	while(i<TL && cod!=F[i].codF)
-	i++;
-	if(i<TL)
-	 return i;
-	else
-	 return -1;
+				if (linhaC >= 23) 
+				{
+		            getch();
+		            limpartela(linhaC);
+		        }
+	    	}
+	        
+	        fread(&F,sizeof(F),1,frn);
+	        
+    	}
+    	
+    	getch();
+    	fclose(frn);
+    	
+    }
+    
+    limpartelaanyway();
+}	
+
+void visu_prod()
+{
+	
 }
-
-
-/*
-void ExclFisica(void){
-	int pos, Mat;
-	char op;
-	TpFunc Reg;
-	FILE *PtrFunc = fopen("func.dat","rb");
-	printf("\n### Exclusao Fisica de Funcionarios ###\n");
-	if (PtrFunc == NULL)
-		printf("\nErro de Abertura!\n");
-	else
-		{
-			printf("\nMatricula do Funcionario a excluir: ");
-			scanf("%d",&Mat);
-			if (Mat>0)
-			{
-				pos = BuscaMat(PtrFunc,Mat);
-				
-				if (pos==-1)
-					printf("\nMatricula nao encontrada!\n");
-				else
-					{   
-						fseek(PtrFunc,pos,0);
-						fread(&Reg,sizeof(TpFunc),1,PtrFunc);
-						printf("\n*** Detalhes do Registro ***\n");
-						printf("Matricula: %d\n",Reg.Matricula);
-						printf("Nome: %s\n",Reg.Nome);
-						printf("Salario: R$ %.f\n",Reg.Salario);
-						
-						printf("\nConfirma exclusao (S/N)? ");
-						op = toupper(getche());
-						if (op=='S')
-						{
-							FILE *PtrTemp = fopen("Temp.dat", "wb");
-							rewind(PtrFunc);
-							fread(&Reg,sizeof(TpFunc),1,PtrFunc);
-							while(!feof(PtrFunc)){
-								if(Reg.Matricula != Mat)
-									fwrite(&Reg,sizeof(TpFunc),1,PtrTemp);
-									
-							}
-							fclose(PtrFunc);
-							fclose(PtrTemp);
-							remove("Func.dat");
-							rename("Temp.dat","Func.dat");
-							
-							printf("\nRegistro deletado!!\n");
-						}
-						else
-							fclose(PtrFunc);
-					}
-				getch();
-								
-			}
-		}
-}
-*/
-
+	
+void visu_cli()
+{
+	
+}	
+	
 /*Cadastros*/
 void cad_forn()
 {
 	struct Fornecedor F;
-	int linhaC=11,qtd,aux;
+	int linhaC=11,aux,existe;
 	
-	msg();
-	printf("Quantos fornecedores deseja cadastrar?");
-	txt(linhaC);
-	scanf("%d",&qtd);
-	linhaC++;
-	if(qtd<=0)
-	return;
-	else
+	FILE *frn = fopen("C://VendasATP2//cadastros//fornecedores.dat","ab+");
+	if(frn==NULL)
 	{
-		FILE *frn = fopen("fornecedores.dat","ab+");
-		if(frn==NULL)
+		msg();
+		printf("--[ARQUIVO INVALIDO]--");
+		getch();	
+		exit(1);
+	}
+	else
 		{
 			msg();
-			printf("--[ARQUIVO INVALIDO]--");
-			getch();	
-			exit(1);
-		}
-		else
-		{
-			for(int i=0;i<qtd;i++)
+			printf("Digite o codigo do fornecedor/0 Encerra");
+			txt(linhaC);
+			scanf("%d",&aux);
+				
+			while(aux>0)
 			{
-				msg();
-				printf("Digite o codigo do fornecedor: ");
-				txt(linhaC);
-				scanf("%d",&aux);
-				linhaC++;
-				if(cod<=0)
+				existe = busca_forn(frn,aux,F);
+				if(existe==-1)
+				{
+					F.codF = aux;
+					msg();
+					printf("Digite o nome do fornecedor:");
+					txt(linhaC);
+					gets(F.nomeF);
+					msg();
+					printf("Digite a cidade do fornecedor:");
+					txt(linhaC);
+					gets(F.Cidade);
+					limpartela(linhaC);
+					
+					F.status = false;
+					F.qtd++;
+					
+					fwrite(&F,sizeof(F),1,frn);
+				
+					msg();
+					printf("Digite o codigo do fornecedor/0 Encerra");
+					txt(linhaC);
+					scanf("%d",&aux);
+				}
+				else if(existe!=-1)
 				{
 					msg();
-					printf("***Codigo Invalido!***");
-					getch();	
+					printf("Fornecedor ja cadastrado");
+					getch();
 					return;
 				}
-				else
-				{
-					fwrite(&F,sizeof(F),1,FILE*ptr); 
-					
-					status = true;
-				}
-				printf("Digite o nome do fornecedor: ");
-				printf("Digite a cidade do fornecedor: ");
+			
 			}
+			
+			fclose(frn);
+			
+			msg();
+			printf("--[Cadastro Finalizado]--");
+			getch();
 		}
-	}
-	msg();
-	printf("**Cadastro Finalizado**");
-	
+		
+  	limpartelaanyway();		
 }
 
 /*Borda*/
-
 void borda (int CI, int LI, int CF, int LF, int cor)
 {
 	int i;
@@ -535,7 +470,6 @@ void msgEstatica ()
 void Executar ()
 {
 	char op,opR;
-	struct Fornecedor F;
 	struct Produtos P;
 	struct Cliente C;
 	struct Datav DTV;
@@ -546,7 +480,7 @@ void Executar ()
 	
 	{
 		limparMsg();
-		limparTelaAnyway();
+		limpartelaanyway();
 		op=menu();
 		
 		switch(op)
@@ -554,7 +488,7 @@ void Executar ()
 			case 'A': textcolor(15);
 			gotoxy(14,9);
 			printf("Cadastro do Fornecedor.");
-			cad_forn(F);
+			cad_forn();
 			break;
 			/*
 			case 'B':textcolor(15);
@@ -567,7 +501,7 @@ void Executar ()
 			gotoxy(14,9);
 			printf("Cadastro do Cliente.");
 			cad_Cliente();
-			break;
+			break;*/
 			
 			case 'D':textcolor(15);
 			gotoxy(14,9);
@@ -576,15 +510,16 @@ void Executar ()
 			opR=menu2();
 			
 				if(opR=='1')
-					VisuForn();
+					visu_forn();
 				
 				else if(opR=='2')
-					VisuProd();
+					visu_prod();
 				
 				else if(opR=='3')
-					VisuCli();			
+					visu_cli();			
 				break;
 			 
+			/* 
 			case 'E':textcolor(15);
 			gotoxy(14,9);
 			printf("Venda de produtos.");
@@ -663,7 +598,7 @@ int main (void)
 	
 	
 	/*
-	MENSAGENS PARA O USUÁRIO DEVEM
+	MENSAGENS PARA O USUÃRIO DEVEM
 	ESTAR ENTRE:
 	CI 4 a 33 / 48 a 78
 	LI 4 
@@ -687,7 +622,7 @@ int main (void)
 	CI=50,LI=8,CF=78,LF=24;
 	borda(CI,LI,CF,LF,cor);
 	
-	//BORDA CÓDIGO
+	//BORDA CÃ“DIGO
 	
 	cor=15;
 	CI=2,LI=8,CF=49,LF=24;
@@ -703,4 +638,3 @@ int main (void)
 		
 	return 0;
 } 
-
