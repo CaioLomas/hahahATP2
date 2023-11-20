@@ -21,7 +21,7 @@
 	
 	struct Produtos
 	{
-		int codP,Estoque,codF;
+		int codP,Estoque,codF,qtd=0;
 		char nomeP[35];	
 		float preco;
 		struct Datav DTV;
@@ -32,7 +32,7 @@
 	{
 		char CPF[15];
 		char nomeC[35];
-		int qtdC;
+		int qtdC=0,qtd=0;
 		bool status;
 		float valor;	
 	};
@@ -108,7 +108,7 @@ void limpartelaanyway ()
 void msg()
 {
 	limparMsg ();
-	gotoxy(24,5);
+	gotoxy(20,5);
 	textcolor(10);
 }
 
@@ -287,18 +287,120 @@ char menu7 ()
 }
 
 /*Buscas*/
-int busca_forn(FILE *Ptr,int cod,struct Fornecedor F)
+int busca_forn(FILE *ptr,int cod,struct Fornecedor F)
 {
-	rewind(Ptr);
-	fread(&F,sizeof(F),1,Ptr);
-	while (!feof(Ptr) && cod!=F.codF)
-		fread(&F,sizeof(F),1,Ptr);
+	rewind(ptr);
+	fread(&F,sizeof(F),1,ptr);
+	while (!feof(ptr) && cod!=F.codF)
+		fread(&F,sizeof(F),1,ptr);
 	
-	if (!feof(Ptr))
-		return ftell(Ptr)-sizeof(F);
+	if (!feof(ptr))
+		return ftell(ptr)-sizeof(F);
 	else
 		return -1;
 }
+
+int busca_cpf(FILE *ptr,char aux[35],struct Cliente C) 
+{
+	rewind(ptr);
+	fread(&C,sizeof(C),1,ptr);
+	while (!feof(ptr) && strcmp(C.CPF,aux)!=0)
+		fread(&C,sizeof(C),1,ptr);
+	
+	if (!feof(ptr))
+		return ftell(ptr)-sizeof(C);
+	else
+		return -1;
+}
+
+/*Inserções*/
+/*ALTERAR A INSERÇÃO DIRETA PARA ESQUERDA > DIREITA */
+void alfa_e_beta(FILE* ptr,struct Cliente C,char nome[35])
+{
+	rewind(ptr);
+	fread(&C, sizeof(C), 1, ptr);
+	
+	while (!feof(ptr) && strcmp(nome, C.nomeC) > 0) 
+		fread(&C, sizeof(C), 1, ptr);
+    
+
+    fseek(ptr, -sizeof(C), SEEK_CUR);
+
+    fwrite(&C, sizeof(C), 1, ptr);
+}
+
+/*Validação de CPF*/
+void formata_cpf(char CPF[35])
+{
+	char cpfFormatado[15];
+	int i,j;
+	
+	for (i=0,j=0; i < strlen(CPF) - 2; i++) 
+	{
+        if (i == 3 || i == 6) 
+            cpfFormatado[j++] = '.';
+        
+        	cpfFormatado[j++] = CPF[i];
+    }
+
+    cpfFormatado[j++] = '-';
+    
+    for (i = strlen(CPF) - 2; i < strlen(CPF); i++, j++) 
+        cpfFormatado[j] = CPF[i];
+
+	strcpy(CPF, cpfFormatado);
+}
+
+int verifica_cpf(char* aux) 
+{
+    int cpf[11],i,soma=0,resto;
+
+    for (i = 0; i < 11; i++) 
+        cpf[i] = aux[i] - '0';
+    
+    for (i = 0; i < 9; i++) 
+        soma += cpf[i] * (10 - i);
+    
+    resto = soma % 11;
+    
+    int digito1 = (resto < 2) ? 0 : (11 - resto);
+
+    if (cpf[9] != digito1) 
+        return -1;  
+        
+    soma = 0;
+    for (i = 0; i < 10; i++) 
+        soma += cpf[i] * (11 - i);
+    
+    resto = soma % 11;
+    
+    int digito2 = (resto < 2) ? 0 : (11 - resto);
+
+    if (cpf[10] != digito2) 
+    	return -1;  
+    else    
+   	 	return 1; 
+}
+
+int valida_cpf(char aux[35])
+{
+	int ok;
+	
+	if (strlen(aux) != 11) 
+        return -1;
+    
+    for (int i = 0; i < strlen(aux); i++) 
+		if (aux[i] < '0' || aux[i] > '9') 
+            return -1;  
+	
+	ok=verifica_cpf(aux);
+	
+	if(ok==1)
+    	return 1;
+    else
+    	return -1;
+}
+
 	
 /*Exibições dos cadastros e vendas*/
 void visu_forn() 
@@ -356,6 +458,52 @@ void visu_prod()
 	
 void visu_cli()
 {
+	int linhaC = 11,larguraMaxima = 20; 
+    struct Cliente C;
+
+  	FILE *cli = fopen("C://VendasATP2//cadastros//clientes.dat","rb");
+	if(cli==NULL)
+	{
+		msg();
+		printf("--[ARQUIVO INVALIDO]--");
+		getch();	
+		exit(1);
+	}
+    
+    else 
+	{
+		fread(&C,sizeof(C),1,cli);
+		while(!feof(cli))
+        {
+        	if(C.status!=true)
+	        {
+		        txt(linhaC);
+		        printf("CPF: %s", C.CPF);
+		        txt(linhaC);
+		        printf("Nome: %-*s", larguraMaxima, C.nomeC);
+				txt(linhaC);
+		        printf("Compras: %d", C.qtdC);
+		        txt(linhaC);
+		        printf("Compras: %.2f", C.valor);
+		        linhaC += 2;  
+	
+				if (linhaC >= 23) 
+				{
+		            getch();
+		            limpartela(linhaC);
+		        }
+	    	}
+	        
+	        fread(&C,sizeof(C),1,cli);
+	        
+    	}
+    	
+    	getch();
+    	fclose(cli);
+    	
+    }
+    
+    limpartelaanyway();
 	
 }	
 	
@@ -426,6 +574,87 @@ void cad_forn()
   	limpartelaanyway();		
 }
 
+void cad_cli()
+{
+	struct Cliente C;
+	int linhaC=11,valido;
+	char aux[35];
+	
+	FILE *cli = fopen("C://VendasATP2//cadastros//clientes.dat","ab+");
+	
+	if(cli==NULL)
+	{
+		msg();
+		printf("--[ARQUIVO INVALIDO]--");
+		getch();	
+		exit(1);
+	}
+	
+	else
+	{
+		msg();
+		printf("Digite o CPF do cliente/0 Encerra");
+		txt(linhaC);
+		fflush(stdin);
+		gets(aux);
+		
+		while(aux[0]!='0')
+		{
+			valido=valida_cpf(aux);
+			
+			if(valido==-1)
+			{
+				msg();
+				printf("CPF invalido!");
+				getch();
+				return;
+			}
+			
+			formata_cpf(aux);
+			
+			valido=busca_cpf(cli,aux,C);
+			
+			if(valido==-1)
+			{
+				strcpy(C.CPF,aux);
+				msg();
+				printf("Digite o nome do cliente");
+				txt(linhaC);
+				fflush(stdin);
+				gets(aux);
+				alfa_e_beta(cli,C,aux);
+				strcpy(C.nomeC,aux);
+				limpartela(linhaC);
+				C.qtdC=0,C.valor=0,C.qtd++;
+				C.status = false;
+			}
+			else
+			{
+				msg();
+				printf("CPF cadastrado!");
+				getch();
+				return;	
+			}
+			
+			fwrite(&C,sizeof(C),1,cli);
+			
+				msg();
+				printf("Digite o CPF do cliente/0 Encerra");
+				txt(linhaC);
+				fflush(stdin);
+				gets(aux);
+			
+		}
+		
+		fclose(cli);
+			
+		msg();
+		printf("--[Cadastro Finalizado]--");
+		getch();
+	}
+	limpartelaanyway();	
+}
+
 /*Borda*/
 void borda (int CI, int LI, int CF, int LF, int cor)
 {
@@ -467,14 +696,9 @@ void msgEstatica ()
 	printf("***MENU***");
 }
 
-void Executar ()
+void executar ()
 {
 	char op,opR;
-	struct Produtos P;
-	struct Cliente C;
-	struct Datav DTV;
-	struct Vendas V;
-	struct VendasProd VP;
 	
 	do
 	
@@ -495,13 +719,13 @@ void Executar ()
 			gotoxy(14,9);
 			printf("Cadastro do Produto.");
 			cad_Produtos();
-			break;
+			break;*/
 			
 			case 'C':textcolor(15);
 			gotoxy(14,9);
 			printf("Cadastro do Cliente.");
-			cad_Cliente();
-			break;*/
+			cad_cli();
+			break;
 			
 			case 'D':textcolor(15);
 			gotoxy(14,9);
@@ -632,7 +856,7 @@ int main (void)
 	
 	msgEstatica();
 	
-	Executar();
+	executar();
 	
 	printf("\n\n\n\n\n\n\n\n\n\n\n");
 		
